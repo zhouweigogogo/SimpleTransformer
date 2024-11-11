@@ -4,31 +4,6 @@ import math
 import torch.nn.functional as F
 import numpy as np
 
-
-def get_attn_pad_mask(seq_q, seq_k):
-    batch_size, len_q = seq_q.size()
-    batch_size, len_k = seq_k.size()
-    # seq_k.data.eq(0)返回一个等大的布尔张量，seq_k元素等于0的位置为True,否则为False
-    pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # pad_attn_mask: [batch_size,1,len_k]
-    # 要为每一个q提供一份k，所以把第二维度扩展了q次
-    return pad_attn_mask.expand(batch_size, len_q, len_k)  # return: [batch_size, len_q, len_k]
-    # 返回的是batch_size个 len_q * len_k的矩阵，内容是True和False，
-    # 第i行第j列表示的是query的第i个词对key的第j个词的注意力是否无意义，若无意义则为True，有意义的为False（即被padding的位置是True）
-
-
-# 用于获取对后续位置的掩码，防止在预测过程中看到未来时刻的输入
-# 原文：to prevent positions from attending to subsequent positions
-def get_attn_subsequence_mask(seq):
-    """seq: [batch_size, tgt_len]"""
-    # batch_size个 tgt_len * tgt_len的mask矩阵
-    attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
-    # np.triu 是生成一个上三角矩阵，提取主对角线上方的第一条对角线以上的元素并保持不变，其他置0，即mask掉上三角
-    # k=1意为不包含主对角线（从主对角线向上偏移1开始）
-    subsequence_mask = np.triu(np.ones(attn_shape), k=1)  #
-    subsequence_mask = torch.from_numpy(subsequence_mask).byte()  # 因为只有0、1所以用byte节省内存
-    return subsequence_mask  # return: [batch_size, tgt_len, tgt_len]
-
-
 class PositionalEncoder(nn.Module):
     def __init__(self, d_model, max_len=100):
         super().__init__()  # 调用父类的构造方法
