@@ -7,20 +7,11 @@
 """
 
 import numpy as np
-from langconv import Converter
 from nltk import word_tokenize
 from collections import Counter
 import config
 import torch
 from torch.utils.data import DataLoader, Dataset, random_split
-from torch.nn.utils.rnn import pad_sequence
-
-
-def cht_to_chs(sent):
-    sent = Converter("zh-hans").convert(sent)
-    sent.encode("utf-8")
-    return sent
-
 
 class MyDatasets(Dataset):
     def __init__(self, data_path, max_seq_len):
@@ -41,7 +32,7 @@ class MyDatasets(Dataset):
         读取英文、中文数据
         对每条样本分词并构建包含起始符和终止符的单词列表
         形式如：en = [['BOS', 'i', 'love', 'you', 'EOS'], ['BOS', 'me', 'too', 'EOS'], ...]
-                cn = [['BOS', '我', '爱', '你', 'EOS'], ['BOS', '我', '也', '是', 'EOS'], ...]
+                cn = [['BOS', '我', '爱', '你'], ['BOS', '我', '也', '是''], ...]
         """
         en = []
         cn = []
@@ -49,8 +40,6 @@ class MyDatasets(Dataset):
             for line in f.readlines():
                 sent_en, sent_cn = line.strip().split("\t")
                 sent_en = sent_en.lower()
-                # 中文字体繁简转换
-                sent_cn = cht_to_chs(sent_cn)
                 sent_en = word_tokenize(sent_en)
                 # 中文按字符切分
                 sent_cn = [char for char in sent_cn]
@@ -91,16 +80,12 @@ class MyDatasets(Dataset):
         enc_input_tokens = [self.src_word_dict[word] for word in self.data_src[index]]
         dec_input_tokens = [self.tgt_word_dict[word] for word in self.data_tgt[index]]
 
-        # Add sos, eos and padding to each sentence
-        enc_num_padding_tokens = self.max_seq_len - len(enc_input_tokens) - 2  # We will add <s> and </s>
-        # We will only add <s>, and </s> only on the label
-        dec_num_padding_tokens = self.max_seq_len - len(dec_input_tokens) - 1
+        enc_num_padding_tokens = self.max_seq_len - len(enc_input_tokens) - 2 # BOS EOS
+        dec_num_padding_tokens = self.max_seq_len - len(dec_input_tokens) - 1 # BOS
 
-        # Make sure the number of padding tokens is not negative. If it is, the sentence is too long
         if enc_num_padding_tokens < 0 or dec_num_padding_tokens < 0:
             raise ValueError("Sentence is too long")
 
-        # Add <s> and </s> token
         encoder_input = torch.cat(
             [
                 self.BOS,
@@ -111,7 +96,6 @@ class MyDatasets(Dataset):
             dim=0,
         )
 
-        # Add only <s> token
         decoder_input = torch.cat(
             [
                 self.BOS,
@@ -121,7 +105,6 @@ class MyDatasets(Dataset):
             dim=0,
         )
 
-        # Add only </s> token
         decoder_output = torch.cat(
             [
                 torch.tensor(dec_input_tokens, dtype=torch.int64),
@@ -131,7 +114,6 @@ class MyDatasets(Dataset):
             dim=0,
         )
 
-        # Double check the size of the tensors to make sure they are all seq_len long
         assert encoder_input.size(0) == self.max_seq_len
         assert decoder_input.size(0) == self.max_seq_len
         assert decoder_output.size(0) == self.max_seq_len
@@ -188,7 +170,7 @@ def get_dataloader(datasets, batch_size, num_workers, ratio):
 if __name__ == '__main__':
     dataset = MyDatasets(config.TRAIN_FILE, max_seq_len=30)
     x = dataset[0]
-    print()
+    print(x)
     # length = dataset.__len__()
     # for i in range(length):
     #     x, y, z = dataset[i]
