@@ -76,9 +76,9 @@ class PositionwiseFeedForword(nn.Module):
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, d_ffn, heads, dropout_prob=0.1):
         super().__init__()
-        self.norm_1 = nn.RMSNorm()
-        self.norm_2 = nn.RMSNorm()
-        self.norm_3 = nn.RMSNorm()
+        self.norm_1 = nn.RMSNorm(d_model)
+        self.norm_2 = nn.RMSNorm(d_model)
+        self.norm_3 = nn.RMSNorm(d_model)
         self.attn = MutilHeadAttetion(d_model, heads, dropout_prob)
         self.ffn = PositionwiseFeedForword(d_model, d_ffn)
         self.dropout_1 = nn.Dropout(dropout_prob)
@@ -116,15 +116,15 @@ class DecoderLayer(nn.Module):
     def __init__(self, d_model, d_ffn, heads, dropout_prob=0.1):
         super().__init__()
         self.attn = MutilHeadAttetion(d_model, heads, dropout_prob)
-        self.norm_1 = nn.RMSNorm()
+        self.norm_1 = nn.RMSNorm(d_model)
         self.dropout_1 = nn.Dropout(dropout_prob)
         self.cross_attn = MutilHeadAttetion(d_model, heads, dropout_prob)
-        self.norm_2 = nn.RMSNorm()
+        self.norm_2 = nn.RMSNorm(d_model)
         self.dropout_2 = nn.Dropout(dropout_prob)
         self.ffn = PositionwiseFeedForword(d_model, d_ffn)
-        self.norm_3 = nn.RMSNorm()
+        self.norm_3 = nn.RMSNorm(d_model)
         self.dropout_3 = nn.Dropout(dropout_prob)
-        self.norm_4 = nn.RMSNorm()
+        self.norm_4 = nn.RMSNorm(d_model)
 
     def forward(self, enc_out, enc_mask, dec_input, dec_mask):
         dec_input = self.norm_1(dec_input)
