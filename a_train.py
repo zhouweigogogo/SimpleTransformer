@@ -1,4 +1,4 @@
-from load_data import MyDatasets, get_dataloader
+from a_load_data import MyDatasets, get_dataloader
 import config
 from model.model import Transformer
 import torch.nn as nn
@@ -22,6 +22,7 @@ model = Transformer(src_vocab_size=datasets.src_vocab_size, tgt_vocab_size=datas
                     dropout_prob=config.DROPOUT_PROB).cuda()
 
 optimizer = optim.SGD(model.parameters(), lr=config.LR)
+# optimizer = optim.Adam(model.parameters(), lr=config.LR, betas=(0.9, 0.98), eps=1e-9)
 loss_fn = nn.CrossEntropyLoss(ignore_index=0, label_smoothing=0.1)
 
 min_loss = 1e5

@@ -15,14 +15,22 @@ MAX_LENGTH = 60  # 语句最大长度
 # 数据集路径设置
 DATA_FILE = 'nmt/en-cn/cmn.txt'  # 数据集
 
-SAVE_PATH = './output/train1'  # 模型保存路径
+SAVE_PATH = './output/train4'  # 模型保存路径
 DEVICE = "cuda"
 
 # 训练参数设置
 BATCH_SIZE = 32  # 批次大小
-EPOCHS = 2  # 训练轮数
+EPOCHS = 30  # 训练轮数
 NUM_WORKERS = 0
 IS_SHUFFLE = True
 DROP_LASR = True  # 如果最后一个batch的数据量小于指定的batch_size，是否丢弃
 LR = 10 ** -2
 MOMENTUM = 0.99
+WARMUP = 4
+
+'''
+train1: baseline
+train2: batch Adam
+train3: batch SGD   1和3的效果感觉差不多，证明batch长度接近只能帮助收敛，不能提升效果
+
+'''

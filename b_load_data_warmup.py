@@ -152,7 +152,7 @@ def get_dataloader(datasets, batch_size, num_workers, ratio):
     train_dataloader = DataLoader(
         dataset=train_dataset,  # 训练数据集
         batch_size=batch_size,  # 每个batch的大小
-        shuffle=True,  # 是否在每个epoch开始时打乱数据
+        shuffle=False,  # 是否在每个epoch开始时打乱数据
         num_workers=num_workers,  # 使用多少个子进程来加载数据
     )
 
@@ -168,14 +168,10 @@ def get_dataloader(datasets, batch_size, num_workers, ratio):
 
 
 if __name__ == '__main__':
-    dataset = MyDatasets(config.TRAIN_FILE, max_seq_len=30)
-    x = dataset[0]
-    print(x)
+    datasets = MyDatasets(config.DATA_FILE, max_seq_len=config.MAX_LENGTH)
+    print(datasets[0]['tgt_text'])
+    train_dataloader, val_dataloader = get_dataloader(datasets=datasets, batch_size=config.BATCH_SIZE, num_workers=config.NUM_WORKERS, ratio=0.9)
     # length = dataset.__len__()
-    # for i in range(length):
-    #     x, y, z = dataset[i]
-    #     if not (type(x) == type(y) == type(z)):
-    #         print(f"Index {i}: Types of x, y, z are different.")
-    #         print(f"x: {x} (type: {type(x)})")
-    #         print(f"y: {y} (type: {type(y)})")
-    #         print(f"z: {z} (type: {type(z)})")
+    for batch in train_dataloader:
+        print(batch['tgt_text'][0])
+        break
