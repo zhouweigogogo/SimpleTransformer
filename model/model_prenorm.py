@@ -92,17 +92,20 @@ class EncoderLayer(nn.Module):
         super().__init__()
         self.norm_1 = LayerNorm(d_model)
         self.norm_2 = LayerNorm(d_model)
+        self.norm_3 = LayerNorm(d_model)
         self.attn = MutilHeadAttetion(d_model, heads, dropout_prob)
         self.ffn = PositionwiseFeedForword(d_model, d_ffn)
         self.dropout_1 = nn.Dropout(dropout_prob)
         self.dropout_2 = nn.Dropout(dropout_prob)
 
     def forward(self, enc_input, mask):
-        enc_ouput = self.norm_1(enc_input + self.dropout_1(self.attn(enc_input, enc_input, enc_input, mask)))
+        enc_input = self.norm_1(enc_input)
+        enc_ouput = enc_input + self.dropout_1(self.attn(enc_input, enc_input, enc_input, mask))
         # print(enc_ouput.shape)
-        enc_ouput = self.norm_2(enc_ouput + self.dropout_2(self.ffn(enc_ouput)))
+        enc_ouput = self.norm_2(enc_ouput)
+        enc_ouput = enc_ouput + self.dropout_2(self.ffn(enc_ouput))
         # print(enc_ouput.shape)
-        return enc_ouput
+        return self.norm_3(enc_ouput)
 
 
 class Encoder(nn.Module):
@@ -135,20 +138,19 @@ class DecoderLayer(nn.Module):
         self.ffn = PositionwiseFeedForword(d_model, d_ffn)
         self.norm_3 = LayerNorm(d_model)
         self.dropout_3 = nn.Dropout(dropout_prob)
+        self.norm_4 = LayerNorm(d_model)
 
     def forward(self, enc_out, enc_mask, dec_input, dec_mask):
-        residual = dec_input
-        dec_out = self.attn(dec_input, dec_input, dec_input, dec_mask)
-        dec_out = self.norm_1(residual + self.dropout_1(dec_out))  # 这层的输出用来作add
+        dec_input = self.norm_1(dec_input)
+        dec_out = dec_input + self.dropout_1(self.attn(dec_input, dec_input, dec_input, dec_mask))
 
         residual = dec_out
-        dec_out = self.cross_attn(dec_out, enc_out, enc_out, enc_mask)  # k v 来自encode
-        dec_out = self.norm_2(residual + self.dropout_2(dec_out))
+        dec_out = self.norm_2(dec_out)
+        dec_out = residual + self.dropout_2(self.cross_attn(dec_out, enc_out, enc_out, enc_mask))
 
         residual = dec_out
-        dec_out = self.ffn(dec_out)
-        dec_out = self.norm_3(residual + self.dropout_3(dec_out))
-        return dec_out
+        dec_out = residual + self.dropout_3(self.ffn(dec_out))
+        return self.norm_4(dec_out)
 
 
 class Decoder(nn.Module):

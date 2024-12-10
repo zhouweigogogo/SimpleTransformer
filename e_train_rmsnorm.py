@@ -1,6 +1,6 @@
 from b_load_data_warmup import MyDatasets, get_dataloader
 import config
-from model.model_prenorm import Transformer
+from model.model_rmsnorm import Transformer
 import torch.nn as nn
 import torch.optim as optim
 import torch

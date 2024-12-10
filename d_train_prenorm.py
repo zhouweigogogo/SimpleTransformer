@@ -1,8 +1,9 @@
-from b_load_data_warmup import MyDatasets, get_dataloader
+from d_load_data_prenorm import MyDatasets, get_dataloader
 import config
 from model.model_prenorm import Transformer
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import LambdaLR
 import torch
 from tqdm import tqdm
 import os
@@ -24,6 +25,7 @@ model = Transformer(src_vocab_size=datasets.src_vocab_size, tgt_vocab_size=datas
 # optimizer = optim.SGD(model.parameters(), lr=config.LR)
 optimizer = optim.Adam(model.parameters(), lr=config.LR, betas=(0.9, 0.98), eps=1e-9)
 scheduler = warmup_opt(optimizer, num_warmup_epochs=config.WARMUP, num_training_epochs=config.EPOCHS, warmup_init_lr=config.WARMUP_INIT_LR, warmup_target_lr=config.WARMUP_TARGET_LR, min_lr=config.MIN_LR)
+# scheduler = LambdaLR(optimizer, lr_lambda=noam_lr_scheduler(config.D_MODEL, config.WARMUP_STEP, config.FACTOR))
 loss_fn = nn.CrossEntropyLoss(ignore_index=0, label_smoothing=0.1)
 
 min_loss = 1e5
@@ -50,17 +52,20 @@ for epoch in range(config.EPOCHS):
             loss = loss_fn(proj_output.view(-1, datasets.tgt_vocab_size), label.view(-1))
 
             loss.backward()
-            optimizer.step()
+
             optimizer.zero_grad(set_to_none=True)
+            optimizer.step()
+
 
             train_pbar.update(1)
             current_lr = get_lr(optimizer)
+            # print(current_lr)
             train_pbar.set_postfix(loss=f'{loss.item():.4f}', lr=f'{current_lr:.6f}')
 
             epoch_train_loss += loss.item()
         all_train_loss.append(epoch_train_loss / len(train_dataloader))
 
-        scheduler.step() # 更新学习率
+        scheduler.step()
         lr_list.append(scheduler.get_last_lr()[0])
 
     model.eval()

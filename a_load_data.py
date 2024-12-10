@@ -152,7 +152,7 @@ def get_dataloader(datasets, batch_size, num_workers, ratio):
     train_dataloader = DataLoader(
         dataset=train_dataset,  # 训练数据集
         batch_size=batch_size,  # 每个batch的大小
-        shuffle=False,  # 是否在每个epoch开始时打乱数据
+        shuffle=True,  # 是否在每个epoch开始时打乱数据
         num_workers=num_workers,  # 使用多少个子进程来加载数据
     )
 
